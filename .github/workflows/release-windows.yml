@@ -26,10 +26,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -55,7 +55,7 @@ jobs:
         run: npm run tauri -- build
 
       - name: Upload Windows installers as workflow artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: kurone-ko-windows-installers
           path: |
@@ -65,7 +65,7 @@ jobs:
 
       - name: Attach installers to GitHub Release
         if: ${{ inputs.upload_to_release && inputs.release_tag != '' }}
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ inputs.release_tag }}
           files: |
