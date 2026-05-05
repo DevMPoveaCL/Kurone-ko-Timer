@@ -19,6 +19,7 @@ dist-ssr
 # AI / local tooling
 .agents/
 .playwright-mcp/
+skills-lock.json
 
 # Tauri / Rust build output
 src-tauri/target/
