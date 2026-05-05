@@ -73,12 +73,12 @@ export function OnboardingModal({ onClose }: OnboardingModalProps) {
         onKeyDown={trapFocus}
       >
         <p className="dashboard-eyebrow">Guided setup</p>
-        <h2 id="onboarding-title">Welcome to KURONE-KO</h2>
-        <p>Start Focus opens the minimal timer widget. Configuration is where you prepare durations, goals, and Kurone-ko Playlist before focusing.</p>
+        <h2 id="onboarding-title">Welcome to Kurone-ko Timer</h2>
+        <p>Start Session opens the minimal timer widget. In Settings you can adjust your focus and break durations, daily goals, and long-break cadence.</p>
         <ul>
-          <li>Use Configuration before a session.</li>
-          <li>Use Instructions any time you want to reopen this guide.</li>
-          <li>Keep the widget distraction-free while you work.</li>
+          <li>Kurone-ko Playlist comes built-in — music starts automatically with each focus session.</li>
+          <li>Use Settings before a session to prepare your timer.</li>
+          <li>More integrations (Spotify, Zettelkasten, AI tools) are coming in future updates.</li>
         </ul>
         <label className="onboarding-checkbox">
           <input
@@ -88,8 +88,11 @@ export function OnboardingModal({ onClose }: OnboardingModalProps) {
           />
           No volver a mostrar
         </label>
-        <button className="dashboard-entry dashboard-entry-primary" type="button" onClick={startFocusing}>
-          Start focusing
+        <button className="dashboard-action-button dashboard-action-button-primary" type="button" onClick={startFocusing}>
+          Got it
+        </button>
+        <button className="onboarding-close" type="button" aria-label="Close instructions" onClick={closeTemporarily}>
+          ✕
         </button>
       </div>
     </div>

@@ -1,108 +1,156 @@
-# KURONE-KO
+# Kurone-ko Timer
 
-KURONE-KO is a local-first desktop focus companion. It combines a quiet Pomodoro-style timer widget with a small dashboard for setup, onboarding, playlist control, and daily focus history, so the configuration lives away from the distraction-free work surface.
+A **minimalist floating Pomodoro widget** for Windows. No accounts, no cloud, no bloat. Just a timer that floats on top of your work and stays out of the way.
 
-## Core features
+The name comes from 黒猫 (kuroneko — "black cat" in Japanese), a symbol of quiet company during deep focus.
 
-- Floating timer widget with focus, short break, and long break phases.
-- Compact dashboard for starting focus, adjusting settings, and reopening onboarding.
-- Daily focus summary backed by local app storage.
-- Optional KURONE-KO Playlist using bundled `.ogg` audio assets.
-- Native desktop shell powered by Tauri with no account, backend, or cloud dependency.
+---
+
+## Features
+
+- **Floating timer widget** (300×150) — always-on-top, transparent, borderless. Stays visible while you work.
+- **Dashboard** (360×640) — configure durations, goals, view daily focus history.
+- **Pomodoro phases** — focus, short break, long break. Configurable durations and session goals.
+- **Built-in music** — Kurone-ko Playlist (13 `.ogg` tracks). Music starts automatically with each focus session.
+- **Daily history** — completed sessions tracked with focused minutes. Summary visible on both dashboard and timer.
+- **Full keyboard control** — start, pause, reset, music, history, move windows, all without a mouse.
+- **Desktop native** — built with Tauri 2. Lightweight (~5MB), no Electron, no browser dependency.
+
+---
 
 ## Screenshots
 
-Screenshots are stored in [`docs/screenshots/`](docs/screenshots/).
+> ⚠️ Screenshots are outdated (v1.0.0). To capture current v1.1.0 screenshots, run `npm run tauri dev` and take native screenshots of the dashboard (360×640) and timer (300×150) windows. Replace `docs/screenshots/dashboard.png` and `docs/screenshots/timer-widget.png`.
 
 | Dashboard | Timer widget |
-| --- | --- |
-| ![KURONE-KO dashboard](docs/screenshots/dashboard.png) | ![KURONE-KO timer widget](docs/screenshots/timer-widget.png) |
+|-----------|-------------|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Timer](docs/screenshots/timer-widget.png) |
 
-If the image files are not present yet, see [`docs/screenshots/README.md`](docs/screenshots/README.md) for the expected capture list.
+---
 
-## Tech stack
+## System requirements (users)
 
-- Tauri 2 + Rust native shell
-- React 19 + TypeScript
-- Zustand 5 for local UI state
-- Vite for development
-- Vitest + Testing Library for unit/component coverage
-- Playwright for Tauri/WebView E2E coverage
+| Component | Requirement |
+|-----------|-------------|
+| **OS** | Windows 10 version 1809+ or Windows 11 |
+| **WebView2** | Included with Windows 10+. Installer auto-downloads it if missing. |
+| **Disk** | ~50 MB installed |
+| **RAM** | ~80 MB at runtime |
+| **Rust** | **Not needed** — everything is bundled in the `.exe` |
 
-## Prerequisites
+---
 
-- Node.js and npm
-- Rust toolchain
-- Tauri 2 platform prerequisites for your operating system
-- Microsoft Edge WebView2 Runtime on Windows
+## Install
 
-## Install and development
+Download the latest `KURONE-KO_*_x64-setup.exe` from [Releases](https://github.com/DevMPoveaCL/Kurone-ko-Timer/releases).
 
-Install dependencies:
+Run the installer. A shortcut is created on your desktop and in the Start Menu.
+
+---
+
+## Keyboard shortcuts
+
+### Timer widget
+
+| Key | Action |
+|-----|--------|
+| `S` | Start / Pause / Resume |
+| `R` | Reset timer |
+| `M` | Toggle music on/off |
+| `H` | Toggle history panel |
+| `Escape` | Close panel or return to dashboard |
+
+### Dashboard
+
+| Key | Action |
+|-----|--------|
+| `S` | Open Settings |
+| `I` | Open Instructions |
+| `H` | Keyboard shortcuts reference |
+| `Escape` | Return to main dashboard |
+
+### Global
+
+| Key | Action |
+|-----|--------|
+| `Alt+Tab` | Bring Kurone-ko Timer into focus |
+| `Escape` | Close panels / modals |
+| `Ctrl+←↑→↓` | Move window 40px per press |
+| `Tab` | Navigate between buttons and fields |
+
+---
+
+## Development
+
+### Prerequisites (developers only)
+
+- **Node.js** 18+ and npm
+- **Rust** toolchain (rustc, cargo)
+- **Tauri 2** platform prerequisites ([guide](https://v2.tauri.app/start/prerequisites/))
+
+### Setup
 
 ```bash
 npm install
+npm run tauri dev      # starts Vite + Tauri in dev mode
 ```
 
-Run the Vite web dev server:
+### Verify
 
 ```bash
-npm run dev
+npm test               # 26 files, 175 tests (Vitest)
+npx tsc --noEmit       # TypeScript strict check
+npm run test:e2e       # Playwright E2E (requires Tauri dev running)
 ```
 
-Run the native Tauri development app:
-
-```bash
-npm run tauri dev
-```
-
-## Verification
-
-Run unit/component tests:
-
-```bash
-npm test
-```
-
-Run TypeScript checks:
-
-```bash
-npx tsc --noEmit
-```
-
-Run the native E2E suite:
-
-```bash
-npm run test:e2e
-```
-
-### E2E notes
-
-The Playwright E2E suite starts `npm run tauri dev` with WebView2 remote debugging enabled and connects to the real Tauri WebView over CDP. Port `9222` must be free unless you provide `KURONE_KO_CDP_ENDPOINT` with a different endpoint.
-
-Generated Playwright reports and `test-results/` are local artifacts and should not be committed.
+---
 
 ## Project structure
 
-```text
-docs/screenshots/               Public README screenshots
-public/audio/kuroneko-playlist/ Bundled local playlist assets
-src/                            React application source
-src/e2e/                        Browser-exposed E2E driver helpers
-src/features/                   Feature modules for dashboard, timer, music, settings, and history
-src/shared/                     Shared hydration/window utilities
-src-tauri/                      Tauri shell, config, icons, and Rust source
-tests/e2e/                      Playwright E2E tests for the native app
+```
+src/
+├── features/
+│   ├── timer/          # Pomodoro core (state machine, store, UI)
+│   ├── dashboard/      # Dashboard UI, modals, shortcuts
+│   ├── history/        # Session tracking, daily summaries
+│   ├── settings/       # Timer configuration
+│   ├── music/          # Audio playback, source registry
+│   └── config/         # Settings panel
+├── shared/
+│   ├── window/         # Window switcher, position tracking
+│   ├── shortcuts/      # Keyboard shortcut hook
+│   └── hydration/      # App hydration coordinator
+├── App.tsx
+└── App.css
+
+src-tauri/
+├── src/lib.rs          # Tauri commands
+├── tauri.conf.json     # Window + bundle config
+├── capabilities/       # ACL permissions
+└── icons/              # App icons
+
+tests/e2e/              # Playwright E2E smoke tests
+docs/                   # Screenshots, roadmap, development journal
 ```
 
-## Public repository safety
+---
 
-KURONE-KO does not require checked-in secrets, API keys, accounts, signing credentials, or environment files for development. Keep local `.env*`, build output, Playwright reports, `test-results/`, and Rust target artifacts out of version control.
+## Tech stack
 
-## v1.0 status
+| Layer | Technology |
+|-------|-----------|
+| Desktop runtime | Tauri 2 |
+| Frontend | React 19 + TypeScript (strict) |
+| State management | Zustand 5 |
+| Styling | Pure CSS |
+| Testing | Vitest 4 + Playwright |
+| Backend | Rust (Tauri commands) |
+| Persistence | JSON files via Tauri fs |
 
-Version `1.0.0` is the public baseline for the local desktop focus companion: dashboard, timer widget, local focus history, onboarding, settings, bundled playlist support, and automated verification are in place.
+---
 
 ## License
 
-Released under the [MIT License](LICENSE).
+[MIT](LICENSE)
+
+*Developed by DevMPoveaCL*

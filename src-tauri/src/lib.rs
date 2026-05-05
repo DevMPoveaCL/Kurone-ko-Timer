@@ -80,17 +80,30 @@ fn save_settings(app_handle: AppHandle, settings: serde_json::Value) -> Result<(
     save_json_file(&app_handle, SETTINGS_FILE, "settings", settings)
 }
 
+/// Position a window by label using WebviewWindow::set_position.
+/// Falls back to no-op on error so the Rust side never panics.
+#[tauri::command]
+fn position_window(app_handle: AppHandle, label: String, x: i32, y: i32) {
+    if let Some(window) = app_handle.get_webview_window(&label) {
+        // Physical position in pixels, relative to screen origin
+        let pos = tauri::PhysicalPosition::new(x, y);
+        let _ = window.set_position(tauri::Position::Physical(pos));
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             load_timer_snapshot,
             save_timer_snapshot,
             load_history,
             save_history,
             load_settings,
-            save_settings
+            save_settings,
+            position_window
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

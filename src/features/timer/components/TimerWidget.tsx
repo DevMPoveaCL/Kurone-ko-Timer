@@ -5,7 +5,10 @@ import { isCompletedPositiveFocusSession, useHistoryStore } from "../../history/
 import { getDailyFocusSummary } from "../../history/summary";
 import { useSettingsStore } from "../../settings/store";
 import { useMusicStore } from "../../music/store";
+import { useKeyboardShortcuts } from "../../../shared/shortcuts/useKeyboardShortcuts";
+import { switchToDashboard, moveWindowByDelta } from "../../../shared/window/switcher";
 import { useAppHydration } from "../../../shared/hydration/useAppHydration";
+
 import { TIMER_STATUS, type TimerStatus } from "../model";
 import { useTimerStore } from "../store";
 import { TimerControls } from "./TimerControls";
@@ -71,6 +74,7 @@ export function TimerWidget() {
     })),
   );
   const hydrateMusic = useMusicStore((state) => state.hydrate);
+  const toggleMusic = useMusicStore((state) => state.toggle);
 
   const { hydrated } = useAppHydration({ hydrateSettings, hydrateHistory, hydrateMusic, hydrate, setSettings });
 
@@ -135,6 +139,78 @@ export function TimerWidget() {
     setActivePanel((currentPanel) => (currentPanel === panel ? WIDGET_PANEL.TIMER : panel));
   };
 
+  useKeyboardShortcuts([
+    {
+      key: "s",
+      description: "Start / Pause / Resume",
+      action: () => {
+        if (status === TIMER_STATUS.IDLE) {
+          void startWithLatestSettings();
+        } else if (status === TIMER_STATUS.RUNNING) {
+          pause();
+        } else if (status === TIMER_STATUS.PAUSED) {
+          resume();
+        } else if (status === TIMER_STATUS.SESSION_COMPLETE) {
+          void startWithLatestSettings();
+        }
+      },
+    },
+    {
+      key: "r",
+      description: "Reset timer",
+      action: () => {
+        if (status !== TIMER_STATUS.IDLE && status !== TIMER_STATUS.SESSION_COMPLETE) {
+          void resetWithLatestSettings();
+        }
+      },
+    },
+    {
+      key: "m",
+      description: "Toggle music",
+      action: () => void toggleMusic(),
+    },
+    {
+      key: "h",
+      description: "History panel",
+      action: () => showPanel(WIDGET_PANEL.HISTORY),
+    },
+    {
+      key: "Escape",
+      description: "Back to dashboard",
+      action: () => {
+        if (activePanel !== WIDGET_PANEL.TIMER) {
+          setActivePanel(WIDGET_PANEL.TIMER);
+        } else {
+          void switchToDashboard();
+        }
+      },
+    },
+    {
+      key: "ArrowLeft",
+      ctrl: true,
+      description: "Move window left",
+      action: () => void moveWindowByDelta("timer", -40, 0),
+    },
+    {
+      key: "ArrowRight",
+      ctrl: true,
+      description: "Move window right",
+      action: () => void moveWindowByDelta("timer", 40, 0),
+    },
+    {
+      key: "ArrowUp",
+      ctrl: true,
+      description: "Move window up",
+      action: () => void moveWindowByDelta("timer", 0, -40),
+    },
+    {
+      key: "ArrowDown",
+      ctrl: true,
+      description: "Move window down",
+      action: () => void moveWindowByDelta("timer", 0, 40),
+    },
+  ]);
+
   const handleWidgetPointerDown = (event: PointerEvent<HTMLElement>) => {
     if (event.button !== 0 || isInteractiveDragTarget(event.target)) {
       return;
@@ -170,7 +246,7 @@ export function TimerWidget() {
       )}
 
       {activePanel === WIDGET_PANEL.HISTORY && (
-        <div className="compact-panel history-panel" aria-label="Today history">
+        <div className="compact-panel history-panel" aria-label="Today history" tabIndex={0}>
           <p className="summary-line">Today: {todaysFocusSummary.completedSessions} sessions · {todaysFocusSummary.focusedMinutes} min</p>
           {todaysCompletedSessions.length > 0 && <p className="summary-note">All {todaysCompletedSessions.length} shown · scroll if needed</p>}
           <ol>

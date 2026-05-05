@@ -199,6 +199,12 @@ export const createHistoryStore = (repository: HistoryRepository = defaultReposi
 
       try {
         await repository.save(sessions);
+        try {
+          const { emit } = await import("@tauri-apps/api/event");
+          emit("history-updated", { count: sessions.length }).catch(() => {});
+        } catch {
+          // Tauri event API not available
+        }
       } catch (error) {
         set({ error: normalizeError(error) });
       }

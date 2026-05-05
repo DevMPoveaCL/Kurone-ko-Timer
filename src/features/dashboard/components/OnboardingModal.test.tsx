@@ -20,27 +20,28 @@ describe("OnboardingModal", () => {
   it("renders as an accessible modal and traps Tab focus inside dialog actions", () => {
     render(<OnboardingModal onClose={onClose} />);
 
-    const dialog = screen.getByRole("dialog", { name: "Welcome to KURONE-KO" });
+    const dialog = screen.getByRole("dialog", { name: "Welcome to Kurone-ko Timer" });
     expect(dialog.getAttribute("aria-modal")).toBe("true");
-    expect(screen.getByRole("heading", { name: "Welcome to KURONE-KO" }).textContent).toBe("Welcome to KURONE-KO");
+    expect(screen.getByRole("heading", { name: "Welcome to Kurone-ko Timer" }).textContent).toBe("Welcome to Kurone-ko Timer");
 
     const dismissCheckbox = screen.getByLabelText("No volver a mostrar");
-    const dismissButton = screen.getByRole("button", { name: "Start focusing" });
-    dismissButton.focus();
-    fireEvent.keyDown(dialog, { key: "Tab" });
+    const closeButton = screen.getByRole("button", { name: "Close instructions" });
 
+    // Tab wraps from last element back to first
+    closeButton.focus();
+    fireEvent.keyDown(dialog, { key: "Tab" });
     expect(document.activeElement).toBe(dismissCheckbox);
 
+    // Shift+Tab wraps from first element back to last
     fireEvent.keyDown(dialog, { key: "Tab", shiftKey: true });
-
-    expect(document.activeElement).toBe(dismissButton);
+    expect(document.activeElement).toBe(closeButton);
   });
 
   it("dismisses permanently only when the checkbox is checked", () => {
     render(<OnboardingModal onClose={onClose} />);
 
     fireEvent.click(screen.getByLabelText("No volver a mostrar"));
-    fireEvent.click(screen.getByRole("button", { name: "Start focusing" }));
+    fireEvent.click(screen.getByRole("button", { name: "Got it" }));
 
     expect(window.localStorage.getItem(ONBOARDING_DISMISSED_STORAGE_KEY)).toBe("true");
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -49,7 +50,7 @@ describe("OnboardingModal", () => {
   it("closes with Escape or overlay click without persisting the dismissed flag", () => {
     const { rerender } = render(<OnboardingModal onClose={onClose} />);
 
-    fireEvent.keyDown(screen.getByRole("dialog", { name: "Welcome to KURONE-KO" }), { key: "Escape" });
+    fireEvent.keyDown(screen.getByRole("dialog", { name: "Welcome to Kurone-ko Timer" }), { key: "Escape" });
 
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(window.localStorage.getItem(ONBOARDING_DISMISSED_STORAGE_KEY)).toBeNull();

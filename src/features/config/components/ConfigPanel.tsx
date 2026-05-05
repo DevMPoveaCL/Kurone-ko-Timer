@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { MUSIC_SOURCE, musicSourceRegistry, type MusicSourceId, type MusicSourceProvider } from "../../music/sources";
+import { musicSourceRegistry, type MusicSourceProvider } from "../../music/sources";
 import { useMusicStore } from "../../music/store";
 import { useSettingsStore } from "../../settings/store";
 import type { TimerSettings } from "../../timer/model";
@@ -8,15 +8,7 @@ export interface ConfigPanelProps {
   onBack: () => void;
 }
 
-const FUTURE_SLOTS = ["AI", "Brain", "Kanban", "Methods"] as const;
-const SOURCE_STATUS_LABELS = {
-  [MUSIC_SOURCE.KURONEKO_PLAYLIST]: "Kurone-ko Playlist",
-  [MUSIC_SOURCE.SPOTIFY]: "Spotify",
-  [MUSIC_SOURCE.YOUTUBE_MUSIC]: "YouTube Music",
-} as const;
-
-const resolveMusicStatus = (source: MusicSourceId): string =>
-  `${SOURCE_STATUS_LABELS[source]} configured for focus sessions`;
+const FUTURE_SLOTS = ["AI", "Brain", "Kanban", "Zettelkasten"] as const;
 
 const renderSourceOption = (provider: MusicSourceProvider, selectedSource: MusicSourceProvider["id"], setSource: (source: MusicSourceProvider["id"]) => Promise<void>) => {
   const available = provider.isAvailable();
@@ -71,10 +63,10 @@ export function ConfigPanel({ onBack }: ConfigPanelProps) {
   };
 
   return (
-    <section className="config-shell" aria-label="Session configuration" data-interactive-region>
+    <section className="config-shell" aria-label="Session configuration" data-interactive-region tabIndex={0}>
       <button className="dashboard-link-button" type="button" onClick={onBack}>Back to dashboard</button>
       <p className="dashboard-eyebrow">Pre-focus setup</p>
-      <h2>Configuration</h2>
+      <h2>Settings</h2>
 
       <div className="config-section" aria-label="Timer setup">
         <h3>Timer</h3>
@@ -106,9 +98,6 @@ export function ConfigPanel({ onBack }: ConfigPanelProps) {
           <legend>Music source</legend>
           {musicSourceRegistry.getProviders().map((provider) => renderSourceOption(provider, musicSource, setMusicSource))}
         </fieldset>
-        <div aria-live="polite">
-          <output>{resolveMusicStatus(musicSource)}</output>
-        </div>
       </div>
 
       <div className="config-placeholders" aria-label="Future setup slots">
