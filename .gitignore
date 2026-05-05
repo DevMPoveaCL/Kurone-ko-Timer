@@ -16,6 +16,10 @@ dist-ssr
 !.env.example
 .atl/
 
+# AI / local tooling
+.agents/
+.playwright-mcp/
+
 # Tauri / Rust build output
 src-tauri/target/
 
