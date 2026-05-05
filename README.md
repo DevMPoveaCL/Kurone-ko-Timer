@@ -56,25 +56,25 @@ Run the installer. A shortcut is created on your desktop and in the Start Menu.
 | `R` | Reset timer |
 | `M` | Toggle music on/off |
 | `H` | Toggle history panel |
-| `Escape` | Close panel or return to dashboard |
 
 ### Dashboard
 
 | Key | Action |
 |-----|--------|
+| `H` | Keyboard shortcuts reference |
 | `S` | Open Settings |
 | `I` | Open Instructions |
-| `H` | Keyboard shortcuts reference |
-| `Escape` | Return to main dashboard |
 
 ### Global
 
 | Key | Action |
 |-----|--------|
 | `Alt+Tab` | Bring Kurone-ko Timer into focus |
-| `Escape` | Close panels / modals |
+| `Escape` | Close panels / return to main view |
 | `Ctrl+←↑→↓` | Move window 40px per press |
 | `Tab` | Navigate between buttons and fields |
+| `Enter` or `Space` | Activate focused button |
+| `↑` `↓` | Scroll within focused panels |
 
 ---
 
