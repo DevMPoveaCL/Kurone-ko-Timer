@@ -7,7 +7,7 @@ import App from "./App";
 let currentWindowLabel = "dashboard";
 
 vi.mock("@tauri-apps/api/window", () => ({
-  getCurrentWindow: () => ({ label: currentWindowLabel }),
+  getCurrentWindow: () => ({ label: currentWindowLabel, onMoved: vi.fn(() => vi.fn()), setFocus: vi.fn(() => Promise.resolve()), onCloseRequested: vi.fn(() => Promise.resolve(() => undefined)) }),
 }));
 
 vi.mock("./e2e/installE2EDriver", () => ({

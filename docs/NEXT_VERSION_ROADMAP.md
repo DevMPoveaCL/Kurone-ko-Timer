@@ -4,40 +4,66 @@ This document captures proposed improvements for the next Kurone-ko Timer versio
 
 ## Current Baseline
 
-- `v1.0.0` is published publicly on GitHub.
+- `v1.1.0` — Identity, UX polish, keyboard shortcuts, window position sync.
 - Windows installers are available in the GitHub Release as `.msi` and `.exe` assets.
-- CI validates tests and TypeScript checks.
+- CI validates tests (26 files, 175 tests) and TypeScript checks.
 - Manual Windows release workflow builds installers and can attach them to an existing release.
 
-## v1.1.0 — Identity and UX Polish
+## v1.1.0 — Identity and UX Polish ✅
 
 Goal: make the app feel more intentional, branded, and polished without changing the core timer behavior.
 
-### App identity
+### App identity ✅
 
-- Add a Kurone-ko logo/mascot.
-- Replace the default app icons with branded Kurone-ko icons:
-  - Windows `.ico`
-  - macOS `.icns`
-  - PNG sizes used by Tauri
-- Verify the icon appears correctly in:
-  - installed app
-  - Windows Start Menu
-  - taskbar
-  - installer metadata
+- Kurone-ko mascot (black cat + pink cap/K) as dashboard hero.
+- All icons branded via `tauri icon` CLI from master PNG.
+- Icon visible in taskbar, Start Menu, window, and installer metadata.
 
-### UI polish
+### UI polish ✅
 
-- Fix the initial `Start focusing` button alignment/centering issue.
-- Review spacing, typography, and button states in the first-run/dashboard view.
-- Keep the compact floating timer readable and non-intrusive.
-- Preserve the current visual personality: warm, focused, minimal, and cat-themed.
+- "Start Session" button centered, renamed from "Start Focus".
+- Typography: Inter → Nunito (warm, rounded, crisp on Windows). M PLUS Rounded 1c rejected (poor Latin hinting).
+- Dashboard layout: mascot hero (no text branding), compact spacing, full-bleed window.
+- Focus summary redesigned (removed box that looked like a button).
+- Footer: "Developed by DevMPoveaCL".
+- Settings renamed from "Configuration". "Methods" → "Zettelkasten".
+- Unified scrollbar CSS (DRY): grouped selectors, no JSX changes.
+- Keyboard focus indicators (`:focus-visible` with rose outline).
+- Exit button (✕) with proper music cleanup via `onCloseRequested`.
 
-### Release validation
+### Keyboard shortcuts ✅
 
-- Rebuild Windows installers.
-- Smoke test installation using the `.exe` NSIS installer.
-- Confirm the release workflow still runs without warnings.
+- Timer: `S` (start/pause/resume), `R` (reset), `M` (music), `H` (history), `Escape` (dashboard).
+- Dashboard: `S` (settings), `I` (instructions), `H` (shortcuts reference), `Escape` (back).
+- Global: `Ctrl+Arrows` (move window), `Escape` (close panels).
+- Shortcuts reference panel (`?` button → `H` key).
+- Three guardrails: input blocking, modal blocking, Ctrl bypass.
+- Auto-focus on startup (no click needed).
+
+### Window position sync ✅
+
+- Windows remember positions across switches (localStorage).
+- Centered on each other when switching (hide → position → show, no flicker).
+- Clamped to monitor bounds (can't drag off-screen, 80ms debounce).
+- `currentMonitor()` for multi-resolution support (tested 1366×768 through 4K).
+- ACL permissions fixed (`allow-set-position`, `allow-close`, `allow-destroy`).
+- Rust `position_window` command as positioning backend.
+
+### Onboarding & instructions ✅
+
+- Updated text reflecting built-in playlist and upcoming features.
+- "Start focusing" → "Got it" + X close button.
+- Escape and arrow keys work in modals.
+
+### Cross-window reactivity ✅
+
+- Dashboard refreshes history when timer completes a session (Tauri event `history-updated`).
+- `onFocusChanged` for reliable focus detection (replaced unreliable `window.focus`).
+
+### Release validation ✅
+
+- Builds: NSIS `.exe` and WiX `.msi` with branded icons.
+- Smoke tested via `npm run tauri dev`.
 
 ## v1.2.0 — Spotify Playlist Integration
 

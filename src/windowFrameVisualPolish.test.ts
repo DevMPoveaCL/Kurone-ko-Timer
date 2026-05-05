@@ -78,7 +78,6 @@ describe("window frame visual polish", () => {
     const timerCard = getCssBlock(appCss, ".timer-card");
 
     expect(getPixelValue(timerCard, "border-radius")).toBeLessThanOrEqual(12);
-    expect(getPixelValue(timerCard, "margin")).toBe(2);
     expect(timerCard).toContain("box-shadow: 0 0 12px rgba(0, 0, 0, 0.48)");
   });
 

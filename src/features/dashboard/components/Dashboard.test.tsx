@@ -7,9 +7,19 @@ import { ONBOARDING_DISMISSED_STORAGE_KEY, useDashboardStore } from "../store";
 import { Dashboard } from "./Dashboard";
 
 const mockSwitchToTimer = vi.fn<() => Promise<boolean>>(() => Promise.resolve(true));
+const mockOnFocusChanged = vi.fn<(cb: (focused: boolean) => void) => Promise<() => void>>(
+  () => Promise.resolve(() => undefined),
+);
 
 vi.mock("../../../shared/window/switcher", () => ({
   switchToTimer: () => mockSwitchToTimer(),
+}));
+
+vi.mock("@tauri-apps/api/window", () => ({
+  getCurrentWindow: () => ({
+    label: "dashboard",
+    onFocusChanged: (cb: (focused: boolean) => void) => mockOnFocusChanged(cb),
+  }),
 }));
 
 describe("Dashboard", () => {
@@ -22,16 +32,17 @@ describe("Dashboard", () => {
     useDashboardStore.setState({ onboardingDismissed: false });
     useHistoryStore.setState({ sessions: [], hydrated: true, error: null, hydrate: async () => undefined });
     vi.clearAllMocks();
+    mockOnFocusChanged.mockImplementation(() => Promise.resolve(() => undefined));
   });
 
   it("renders the guided dashboard flow entries", () => {
     render(<Dashboard />);
 
-    expect(screen.getByRole("button", { name: "Start Focus" }).textContent).toContain("Start Focus");
-    expect(screen.getByRole("button", { name: "Configuration" }).textContent).toContain("Configuration");
+    expect(screen.getByRole("button", { name: "Start Session" }).textContent).toContain("Start Session");
+    expect(screen.getByRole("button", { name: "Settings" }).textContent).toContain("Settings");
     expect(screen.getByRole("button", { name: "Instructions" }).textContent).toContain("Instructions");
-    expect(screen.getByLabelText("Today's focus summary").textContent).toContain("0 sessions · 0 min");
-    expect(screen.getByRole("dialog", { name: "Welcome to KURONE-KO" }).getAttribute("aria-modal")).toBe("true");
+    expect(screen.getByLabelText("Today's focus summary").textContent).toContain("0 completed today · 0 min focused");
+    expect(screen.getByRole("dialog", { name: "Welcome to Kurone-ko Timer" }).getAttribute("aria-modal")).toBe("true");
   });
 
   it("shows today's completed focus sessions and focused minutes", () => {
@@ -59,7 +70,7 @@ describe("Dashboard", () => {
 
     render(<Dashboard />);
 
-    expect(screen.getByLabelText("Today's focus summary").textContent).toContain("2 sessions · 40 min");
+    expect(screen.getByLabelText("Today's focus summary").textContent).toContain("2 completed today · 40 min focused");
   });
 
   it("does not count zero-minute completed-like entries in today's focus summary", () => {
@@ -87,12 +98,18 @@ describe("Dashboard", () => {
 
     render(<Dashboard />);
 
-    expect(screen.getByLabelText("Today's focus summary").textContent).toContain("1 sessions · 25 min");
+    expect(screen.getByLabelText("Today's focus summary").textContent).toContain("1 completed today · 25 min focused");
   });
 
-  it("refreshes the focus summary when dashboard focus returns after external history changes", async () => {
+  it("refreshes the focus summary when dashboard gains focus after external history changes", async () => {
     const today = new Date().toISOString().slice(0, 10);
     let externalHistoryAvailable = false;
+    let focusCallback: ((focused: boolean) => void) | null = null;
+    mockOnFocusChanged.mockImplementation((cb: (focused: boolean) => void) => {
+      focusCallback = cb;
+      return Promise.resolve(() => undefined);
+    });
+
     const hydrate = vi.fn<() => Promise<void>>(async () => {
       if (!externalHistoryAvailable) {
         return;
@@ -114,36 +131,37 @@ describe("Dashboard", () => {
     useHistoryStore.setState({ sessions: [], hydrated: true, error: null, hydrate });
 
     render(<Dashboard />);
-    expect(screen.getByLabelText("Today's focus summary").textContent).toContain("0 sessions · 0 min");
+    expect(screen.getByLabelText("Today's focus summary").textContent).toContain("0 completed today · 0 min focused");
 
     externalHistoryAvailable = true;
-    window.dispatchEvent(new Event("focus"));
+    // Simulate Tauri window receiving focus
+    (focusCallback as unknown as (f: boolean) => void)?.(true);
 
     await waitFor(() => {
-      expect(screen.getByLabelText("Today's focus summary").textContent).toContain("1 sessions · 25 min");
+    expect(screen.getByLabelText("Today's focus summary").textContent).toContain("1 completed today · 25 min focused");
     });
     expect(hydrate).toHaveBeenCalled();
   });
 
-  it("opens the timer window when Start Focus is activated", () => {
+  it("opens the timer window when Start Session is activated", () => {
     render(<Dashboard />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Start Focus" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start Session" }));
 
     expect(mockSwitchToTimer).toHaveBeenCalledTimes(1);
   });
 
-  it("shows configuration and returns to the main flow without starting a window transition", () => {
+  it("shows settings and returns to the main flow without starting a window transition", () => {
     render(<Dashboard />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Configuration" }));
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
 
     expect(mockSwitchToTimer).not.toHaveBeenCalled();
-    expect(screen.getByRole("heading", { name: "Configuration" }).textContent).toBe("Configuration");
+    expect(screen.getByRole("heading", { name: "Settings" }).textContent).toBe("Settings");
 
     fireEvent.click(screen.getByRole("button", { name: "Back to dashboard" }));
 
-    expect(screen.getByRole("button", { name: "Start Focus" }).textContent).toContain("Start Focus");
+    expect(screen.getByRole("button", { name: "Start Session" }).textContent).toContain("Start Session");
   });
 
   it("shows onboarding on first launch and lets Instructions reopen it after persisted dismissal", () => {
@@ -152,11 +170,11 @@ describe("Dashboard", () => {
 
     render(<Dashboard />);
 
-    expect(screen.queryByRole("dialog", { name: "Welcome to KURONE-KO" })).toBeNull();
+    expect(screen.queryByRole("dialog", { name: "Welcome to Kurone-ko Timer" })).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Instructions" }));
 
-    expect(screen.getByRole("dialog", { name: "Welcome to KURONE-KO" }).getAttribute("aria-modal")).toBe("true");
+    expect(screen.getByRole("dialog", { name: "Welcome to Kurone-ko Timer" }).getAttribute("aria-modal")).toBe("true");
     expect(window.localStorage.getItem(ONBOARDING_DISMISSED_STORAGE_KEY)).toBe("false");
   });
 });

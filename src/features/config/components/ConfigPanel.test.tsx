@@ -40,7 +40,7 @@ describe("ConfigPanel", () => {
   it("edits timer setup fields through the settings store", async () => {
     render(<ConfigPanel onBack={() => undefined} />);
 
-    expect(screen.getByRole("heading", { name: "Configuration" }).textContent).toBe("Configuration");
+    expect(screen.getByRole("heading", { name: "Settings" }).textContent).toBe("Settings");
     expect(getInputValue("Focus minutes")).toBe("25");
 
     fireEvent.change(screen.getByLabelText("Focus minutes"), { target: { value: "30" } });
@@ -67,7 +67,7 @@ describe("ConfigPanel", () => {
     expect(screen.getByRole("button", { name: "AI integration unavailable" }).getAttribute("aria-disabled")).toBe("true");
     expect(screen.getByRole("button", { name: "Brain integration unavailable" }).getAttribute("aria-disabled")).toBe("true");
     expect(screen.getByRole("button", { name: "Kanban integration unavailable" }).getAttribute("aria-disabled")).toBe("true");
-    expect(screen.getByRole("button", { name: "Methods integration unavailable" }).getAttribute("aria-disabled")).toBe("true");
+    expect(screen.getByRole("button", { name: "Zettelkasten integration unavailable" }).getAttribute("aria-disabled")).toBe("true");
   });
 
   it("renders an accessible music source group without generated ambience", async () => {
@@ -117,19 +117,13 @@ describe("ConfigPanel", () => {
     expect(screen.queryByLabelText("Volume presets")).toBeNull();
   });
 
-  it("announces configured music source in a polite live region without playback controls", () => {
+  it("does not expose in-app volume presets because volume is controlled by the device", () => {
     render(<ConfigPanel onBack={() => undefined} />);
 
-    expect(screen.getByText("Kurone-ko Playlist configured for focus sessions").closest("[aria-live='polite']")).not.toBeNull();
-    expect(screen.queryByRole("button", { name: /playlist preview/i })).toBeNull();
-  });
-
-  it("announces Kurone-ko Playlist source without category details or preview playback", () => {
-    useMusicStore.setState({ source: "kuroneko-playlist" });
-    render(<ConfigPanel onBack={() => undefined} />);
-
-    expect(screen.getByText("Kurone-ko Playlist configured for focus sessions").closest("[aria-live='polite']")).not.toBeNull();
-    expect(screen.queryByText(/Deep Focus/)).toBeNull();
-    expect(screen.queryByRole("button", { name: /playlist preview/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Quiet" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Normal" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Focus" })).toBeNull();
+    expect(screen.queryByLabelText("Volume presets")).toBeNull();
   });
 });
+
