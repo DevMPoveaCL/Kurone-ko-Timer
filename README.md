@@ -20,8 +20,6 @@ The name comes from 黒猫 (kuroneko — "black cat" in Japanese), a symbol of q
 
 ## Screenshots
 
-> ⚠️ Screenshots are outdated (v1.0.0). To capture current v1.1.0 screenshots, run `npm run tauri dev` and take native screenshots of the dashboard (360×640) and timer (300×150) windows. Replace `docs/screenshots/dashboard.png` and `docs/screenshots/timer-widget.png`.
-
 | Dashboard | Timer widget |
 |-----------|-------------|
 | ![Dashboard](docs/screenshots/dashboard.png) | ![Timer](docs/screenshots/timer-widget.png) |
