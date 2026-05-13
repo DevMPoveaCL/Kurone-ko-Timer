@@ -18,7 +18,8 @@ function App() {
     void getCurrentWindow().setFocus();
   }, []);
 
-  // Stop music when the window is closed (taskbar close or exit button)
+  // Defense-in-depth cleanup only.
+  // Authoritative shutdown is Rust-owned (src-tauri on_window_event -> app exit).
   useEffect(() => {
     const win = getCurrentWindow();
     const unlisten = win.onCloseRequested(async () => {

@@ -10,6 +10,8 @@ const mockSwitchToTimer = vi.fn<() => Promise<boolean>>(() => Promise.resolve(tr
 const mockOnFocusChanged = vi.fn<(cb: (focused: boolean) => void) => Promise<() => void>>(
   () => Promise.resolve(() => undefined),
 );
+const mockCloseCurrentWindow = vi.fn<() => Promise<void>>(() => Promise.resolve());
+const mockGetByLabel = vi.fn<(label: string) => Promise<{ destroy: () => Promise<void> } | null>>(() => Promise.resolve(null));
 
 vi.mock("../../../shared/window/switcher", () => ({
   switchToTimer: () => mockSwitchToTimer(),
@@ -19,7 +21,11 @@ vi.mock("@tauri-apps/api/window", () => ({
   getCurrentWindow: () => ({
     label: "dashboard",
     onFocusChanged: (cb: (focused: boolean) => void) => mockOnFocusChanged(cb),
+    close: () => mockCloseCurrentWindow(),
   }),
+  Window: {
+    getByLabel: (label: string) => mockGetByLabel(label),
+  },
 }));
 
 describe("Dashboard", () => {
@@ -33,6 +39,8 @@ describe("Dashboard", () => {
     useHistoryStore.setState({ sessions: [], hydrated: true, error: null, hydrate: async () => undefined });
     vi.clearAllMocks();
     mockOnFocusChanged.mockImplementation(() => Promise.resolve(() => undefined));
+    mockCloseCurrentWindow.mockResolvedValue(undefined);
+    mockGetByLabel.mockResolvedValue(null);
   });
 
   it("renders the guided dashboard flow entries", () => {
@@ -176,5 +184,28 @@ describe("Dashboard", () => {
 
     expect(screen.getByRole("dialog", { name: "Welcome to Kurone-ko Timer" }).getAttribute("aria-modal")).toBe("true");
     expect(window.localStorage.getItem(ONBOARDING_DISMISSED_STORAGE_KEY)).toBe("false");
+  });
+
+  it("uses native current-window close once for Exit", async () => {
+    render(<Dashboard />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Exit Kurone-ko Timer" }));
+
+    await waitFor(() => {
+      expect(mockCloseCurrentWindow).toHaveBeenCalledTimes(1);
+    });
+    expect(mockGetByLabel).not.toHaveBeenCalled();
+  });
+
+  it("swallows native close errors without reintroducing timer-window destroy", async () => {
+    mockCloseCurrentWindow.mockRejectedValueOnce(new Error("close failed"));
+    render(<Dashboard />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Exit Kurone-ko Timer" }));
+
+    await waitFor(() => {
+      expect(mockCloseCurrentWindow).toHaveBeenCalledTimes(1);
+    });
+    expect(mockGetByLabel).not.toHaveBeenCalled();
   });
 });

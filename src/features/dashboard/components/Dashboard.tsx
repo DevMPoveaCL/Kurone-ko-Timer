@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { getCurrentWindow, Window } from "@tauri-apps/api/window";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ConfigPanel } from "../../config/components/ConfigPanel";
 import { getDailyFocusSummary } from "../../history/summary";
 import { useHistoryStore } from "../../history/store";
@@ -89,9 +89,10 @@ export function Dashboard() {
     setOnboardingOpen(true);
   };
 
-  const handleExit = () => {
-    Window.getByLabel("timer").then((w) => w?.destroy()).catch(() => {});
-    getCurrentWindow().close().catch(() => {});
+  // Dashboard exit intentionally mirrors native close.
+  // Rust on_window_event owns full-process shutdown guarantees.
+  const handleExit = async () => {
+    await getCurrentWindow().close().catch(() => {});
   };
 
   useKeyboardShortcuts([
