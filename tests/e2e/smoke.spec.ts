@@ -1,7 +1,9 @@
 import { chromium, expect, test, type Browser, type Page } from "@playwright/test";
 import { waitForKuroneKoAppPage } from "../../src/e2e/appPage";
+import { readProcessInfo, waitForShutdown } from "./shutdown-observability";
 
 const CDP_ENDPOINT = process.env.KURONE_KO_CDP_ENDPOINT ?? "http://127.0.0.1:9222";
+const PID_FILE = "test-results/kurone-ko-tauri-dev.json";
 
 interface KuroneKoE2EDriver {
   getWindowLabel: () => Promise<string> | string;
@@ -160,6 +162,16 @@ const isWindowVisible = async (page: Page, label: string): Promise<boolean> =>
     return driver.isWindowVisible(windowLabel);
   }, label);
 
+const assertKuroneKoShutdown = async () => {
+  const processInfo = await readProcessInfo(PID_FILE);
+
+  if (processInfo === null) {
+    throw new Error("Expected Tauri dev pid metadata for shutdown assertion");
+  }
+
+  await waitForShutdown(processInfo.pid, CDP_ENDPOINT);
+};
+
 test.describe("KURONE-KO native widget smoke", () => {
   let browser: Browser;
   let page: Page;
@@ -196,7 +208,7 @@ test.describe("KURONE-KO native widget smoke", () => {
       await backToDashboard.click();
     }
 
-    await dashboardPage.getByRole("button", { name: "Start Focus" }).click();
+    await dashboardPage.getByRole("button", { name: "Start Session" }).click();
 
     page = timerPage;
     await expect.poll(() => isWindowVisible(page, "timer")).toBe(true);
@@ -401,5 +413,18 @@ test.describe("KURONE-KO native widget smoke", () => {
     await expect(page.getByLabel("Pomodoro session complete")).toBeVisible({ timeout: 3_000 });
     await expect.poll(() => getMusicState(page)).toMatchObject({ enabled: false, isPlaying: false, ducked: false });
     await expect(page.getByRole("button", { name: "Play Kurone-ko Playlist" })).toHaveAttribute("aria-pressed", "false");
+  });
+
+  test("exits app process after dashboard Exit, so no hidden window can linger", async () => {
+    await page.getByRole("button", { name: "Play Kurone-ko Playlist" }).click();
+    await expect(page.getByRole("button", { name: "Stop Kurone-ko Playlist" })).toHaveAttribute("aria-pressed", "true");
+
+    await page.getByRole("button", { name: "Return to dashboard" }).click();
+    const dashboardPage = await waitForKuroneKoAppPage(browser, { label: "dashboard" });
+    await expect(dashboardPage.getByLabel("KURONE-KO dashboard")).toBeVisible();
+
+    await dashboardPage.getByRole("button", { name: "Exit Kurone-ko Timer" }).click();
+
+    await assertKuroneKoShutdown();
   });
 });

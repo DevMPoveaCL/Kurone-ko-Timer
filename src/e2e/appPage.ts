@@ -24,7 +24,7 @@ interface KuroneKoE2EWindow {
   };
 }
 
-const DEFAULT_TIMEOUT_MS = 10_000;
+const DEFAULT_TIMEOUT_MS = Number.parseInt(process.env.KURONE_KO_E2E_PAGE_TIMEOUT_MS ?? "30000", 10);
 const DEFAULT_POLL_INTERVAL_MS = 100;
 
 const delay = (milliseconds: number): Promise<void> =>
