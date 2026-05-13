@@ -65,6 +65,15 @@ Goal: make the app feel more intentional, branded, and polished without changing
 - Builds: NSIS `.exe` and WiX `.msi` with branded icons.
 - Smoke tested via `npm run tauri dev`.
 
+## v1.1.1 — Shutdown Reliability ✅
+
+Goal: Ensure the application terminates completely without leaving lingering phantom processes.
+
+- **Native Close Parity**: Closing either the Dashboard or the Timer natively (Alt+F4, X button) now fully terminates the app and stops music.
+- **Dashboard Exit Update**: The UI Exit button now routes cleanly through native close logic.
+- **E2E Observability**: Added automated Playwright regressions that prove CDP and the app process properly die on exit.
+- **Tauri Cache Fix**: Resolved a stale absolute path bug blocking E2E tests by clearing cargo cache.
+
 ## v1.2.0 — Spotify Playlist Integration
 
 Goal: allow users to connect focus sessions with music while avoiding heavy bundled audio assets.

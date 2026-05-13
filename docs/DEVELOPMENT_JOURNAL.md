@@ -200,6 +200,19 @@ Applied `inert` to dashboard shell to block Tab focus on background during modal
 
 The browser's `window.addEventListener("focus")` doesn't fire reliably inside Tauri's webview. When the OS gives focus to a Tauri window, the webview inside it may not get the memo. Use `getCurrentWindow().onFocusChanged()` — a Tauri-specific event that always fires when the native window receives or loses focus.
 
+### Shutdown Lingering Process (Alt+F4 bug)
+
+**Problem**: Pressing Alt+F4 or natively closing the visible window left the app process and background music running. The hidden sibling window (`timer` or `dashboard`) kept the Tauri process alive. Frontend JS cleanup was per-webview and couldn't reliably stop the other window's audio.
+
+**Solution**: Made Rust/Tauri the authoritative shutdown owner. Used `on_window_event` and `WindowEvent::CloseRequested` to call `app_handle().exit(0)` when either app window closes. Kept dashboard Exit and JS cleanup as defense-in-depth, routing dashboard Exit directly through `getCurrentWindow().close()`.
+
+**Lesson**: Two-window Tauri apps don't exit automatically when one window closes. Native lifecycle events in Rust are the only bulletproof way to guarantee shutdown and avoid phantom processes.
+
+### Tauri Cargo Cache & Stale Paths
+
+During E2E testing, Tauri refused to launch due to a missing permissions file: `app_hide.toml (os error 3)`. The build was looking at an old absolute path (`E:\...\Kurone-ko\...`) instead of the current workspace (`kurone-ko-timer`). 
+**Fix**: `cargo clean` inside `src-tauri` forced regeneration of the permissions path mappings. Always clean cargo cache after renaming or moving a Tauri 2 workspace.
+
 ---
 
 *Developed by DevMPoveaCL · Kurone-ko Timer · 2026*
