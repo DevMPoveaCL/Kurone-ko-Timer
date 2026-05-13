@@ -1,10 +1,20 @@
 use std::{fs, path::PathBuf};
 
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, WindowEvent};
 
 const TIMER_SNAPSHOT_FILE: &str = "timer-snapshot.json";
 const HISTORY_FILE: &str = "history.json";
 const SETTINGS_FILE: &str = "settings.json";
+const DASHBOARD_WINDOW_LABEL: &str = "dashboard";
+const TIMER_WINDOW_LABEL: &str = "timer";
+
+fn is_shutdown_window(label: &str) -> bool {
+    matches!(label, DASHBOARD_WINDOW_LABEL | TIMER_WINDOW_LABEL)
+}
+
+fn should_exit_on_window_close(window_label: &str, is_close_requested: bool) -> bool {
+    is_close_requested && is_shutdown_window(window_label)
+}
 
 fn app_data_file_path(app_handle: &AppHandle, file_name: &str) -> Result<PathBuf, String> {
     let app_data_dir = app_handle
@@ -96,6 +106,14 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .on_window_event(|window, event| {
+            let is_close_requested = matches!(event, WindowEvent::CloseRequested { .. });
+
+            // Native close on dashboard/timer must terminate the entire app process.
+            if should_exit_on_window_close(window.label(), is_close_requested) {
+                window.app_handle().exit(0);
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             load_timer_snapshot,
             save_timer_snapshot,
@@ -107,4 +125,36 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{is_shutdown_window, should_exit_on_window_close};
+
+    #[test]
+    fn exits_when_dashboard_requests_close() {
+        assert!(should_exit_on_window_close("dashboard", true));
+    }
+
+    #[test]
+    fn exits_when_timer_requests_close() {
+        assert!(should_exit_on_window_close("timer", true));
+    }
+
+    #[test]
+    fn does_not_exit_for_non_app_window_close() {
+        assert!(!should_exit_on_window_close("settings", true));
+    }
+
+    #[test]
+    fn does_not_exit_when_event_is_not_close_requested() {
+        assert!(!should_exit_on_window_close("dashboard", false));
+    }
+
+    #[test]
+    fn shutdown_window_scope_is_dashboard_or_timer_only() {
+        assert!(is_shutdown_window("dashboard"));
+        assert!(is_shutdown_window("timer"));
+        assert!(!is_shutdown_window("tray"));
+    }
 }
